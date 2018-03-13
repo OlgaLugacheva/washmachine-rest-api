@@ -1,0 +1,150 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <title>Angular JS Table</title>
+    <style>
+        table, th , td {
+            border: 1px solid grey;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+        table tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+        table tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-route.min.js"></script>
+</head>
+<body class="w3-light-grey">
+<h2>Washing programs</h2>
+<div ng-app="mainApp" class="w3-container w3-blue-grey w3-opacity w3-left-align">
+    <a href="#addProgram">Add program</a>
+    <div ng-view></div>
+    <script type="text/ng-template" id="addUser.htm">
+        <h2> Choose program </h2>
+        <label for="name1">Program</label>
+        <select name="name" id="name1" ng-model="program.name" required>
+            <option value="Standart">Standart</option>
+            <option value="Gentle">Gentle</option>
+            <option value="30 minutes">30 minutes</option>
+            <option value="Sport">Sport</option>
+        </select>
+        <label for="wheels1">RPM</label>
+        <select name="wheels" id="wheels1" ng-model="program.wheels" required>
+            <option value="1000">1000</option>
+            <option value="900">900</option>
+            <option value="700">700</option>
+            <option value="400">400</option>
+        </select>
+        <label for="temp">Temperature</label>
+        <select name="temp" id="temp" ng-model="program.temperature" required>
+            <option value="90">90</option>
+            <option value="60">60</option>
+            <option value="40">40</option>
+            <option value="30">30</option>
+        </select>
+        <input type="button" ng-click="createUser()" value="Save" class="w3-btn w3-green w3-round-large w3-margin-bottom"><br/><br/>
+    </script>
+    <script type="text/ng-template" id="editUser.htm">
+        <h2> Stop program </h2>
+        Name : <input type="text" ng-model="program.name" required><br/><br/>
+        Wheels : <input type="text" ng-model="program.wheels" required><br/><br/>
+        Temperature : <input type="text" ng-model="program.temperature" required><br/><br/>
+        <input type="button" ng-click="saveUser(program)" value="Stop" class="w3-btn w3-green w3-round-large w3-margin-bottom"><br/><br/>
+    </script>
+    <script type="text/ng-template" id="viewUsers.htm">
+        <h2> List of  programs </h2>
+        <table border="0">
+            <tr ng-repeat="program in users | filter : search">
+                <td>{{ program.name }}</td>
+                <td>{{ program.wheels }}</td>
+                <td>{{ program.temperature }}</td>
+                <td>{{ program.status }}</td>
+                <td><a href="" ng-click="editUser(program)">edit</a></td>
+            </tr>
+        </table>
+    </script>
+</div>
+
+<script>
+    var mainApp = angular.module("mainApp", ['ngRoute']);
+
+    mainApp.service('UserService',
+            function()  {
+                var savedData = {}
+                function set(data) {
+                    savedData = data;
+                }
+                function get() {
+                    return savedData;
+                }
+
+                return {
+                    set: set,
+                    get: get
+                }
+            }
+    );
+
+    mainApp.config(['$routeProvider',
+        function($routeProvider) {
+            $routeProvider.
+                    when('/addProgram', {
+                        templateUrl: 'addUser.htm',
+                        controller: 'AddStudentController'
+                    }).
+                    when('/editUser', {
+                        templateUrl: 'editUser.htm',
+                        controller: 'EditUserController'
+                    }).
+                    when('/viewPrograms', {
+                        templateUrl: 'viewUsers.htm',
+                        controller: 'UsersController'
+                    }).
+                    otherwise({
+                        redirectTo: '/viewPrograms'
+                    });
+        }]);
+
+    mainApp.controller('AddStudentController', function($scope, $http, $location) {
+        $scope.createUser = function() {
+            $http.post("api/wash/", $scope.program).success(
+                    function (response) {
+                        $location.path("/viewPrograms");
+                    }
+            );
+        }
+    });
+    mainApp.controller('EditUserController', function($scope, $http, $location, UserService) {
+        $scope.program = UserService.get();
+
+        $scope.saveUser = function(program) {
+            $http.put("api/wash/", program).success(function (response) {
+                $location.path("/viewPrograms");
+            });
+        }
+    });
+
+    mainApp.controller('UsersController', function($scope, $http, $location, UserService) {
+        $http.get("api/wash/").success(function (response) {
+            $scope.users = response;
+        });
+
+        $scope.editUser = function(program) {
+            UserService.set(program);
+            $location.path("/editUser");
+        }
+
+        $scope.deleteUser = function(program) {
+            $http.delete("api/wash/", program).success(function (response) {
+                $location.path("/viewUsers");
+            });
+        }
+
+    });
+</script>
+</body>
+</html>
